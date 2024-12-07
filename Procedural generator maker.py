@@ -278,6 +278,8 @@ while True:
                     move_speed_input = move_speed_input[:-1]
                 elif active_field == "auto_chunk_random" and auto_chunk_random_input!= "":
                     auto_chunk_random_input = auto_chunk_random_input[:-1]
+                elif active_field == "auto_chunk_random_speed" and auto_chunk_random_speed_input != "":
+                    auto_chunk_random_speed_input = auto_chunk_random_speed_input[:-1]
             if event.key == pygame.K_TAB:
                 if active_field == "x":
                     active_field = "y"

@@ -157,6 +157,8 @@ move_speed = 0.5
 move_speed_input = ""
 auto_chunk_random_input = ""
 auto_chunk_random = ""
+auto_chunk_random_speed = 1  # Скорость перемещения по случайным координатам
+auto_chunk_random_speed_input = ""
 
 draw_text_position = []
 while True:
@@ -191,6 +193,7 @@ while True:
                     offset[1] -= move_speed
                 if event.key == pygame.K_e:
                     offset[1] += move_speed
+
             if event.key == pygame.K_RETURN:
                 if x_input!= "" and y_input!= "" and z_input!= "":
                     offset[0] = int(x_input)
@@ -239,6 +242,13 @@ while True:
                     elif auto_chunk_random_input.lower() == "off":
                         auto_chunk_random = False
                     auto_chunk_random_input = ""
+                elif active_field == "auto_chunk_random_speed":
+                    try:
+                        auto_chunk_random_speed = float(auto_chunk_random_speed_input)
+                        auto_chunk_random_speed_input = ""
+                    except ValueError:
+                        # Ignore invalid input (e.g., empty string or invalid format)
+                        pass
             if event.key == pygame.K_BACKSPACE:
                 if active_field == "x" and x_input!= "":
                     x_input = x_input[:-1]
@@ -284,6 +294,8 @@ while True:
                 elif active_field == "move_speed":
                     active_field = "auto_chunk_random"
                 elif active_field == "auto_chunk_random":
+                     active_field = "auto_chunk_random_speed"
+                elif active_field == "auto_chunk_random_speed":
                     active_field = "x"
                 elif active_field == "lang":
                     active_field = "octaves"
@@ -367,13 +379,15 @@ while True:
                     move_mode = "free"
                 else:
                     move_mode = "chunk"
+            if event.unicode.isdigit() or event.unicode == '.':
+                auto_chunk_random_speed_input += event.unicode
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     update(offset)
 
     if auto_chunk_random:
         if pygame.time.get_ticks() % 1000 < 50:
             offset = [random.randint(-100, 100), random.randint(-100, 100), random.randint(-100, 100)]
-
+            offset = [offset[0] * auto_chunk_random_speed, offset[1] * auto_chunk_random_speed, offset[2] * auto_chunk_random_speed]
     if current_mode == "main":
         if active_field == "x":
             draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255))
@@ -407,7 +421,10 @@ while True:
             draw_text((-27.5, -1.0, 0), "Auto chunk random: " + auto_chunk_random_input + "_", (255, 255, 255))
         else:
             draw_text((-27.5, -1.0, 0), "Auto chunk random: " + str(auto_chunk_random), (255, 255, 255))
-    
+        if active_field == "auto_chunk_random_speed":
+            draw_text((-28, -4.0, 0), "Auto chunk random speed: " + auto_chunk_random_speed_input + "_", (255, 255, 255))
+        else:
+            draw_text((-28, -4.0, 0), "Auto chunk random speed: " + str(auto_chunk_random_speed), (255, 255, 255))
         # Отрисовка координат
         draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))
         draw_text((-22.6, 29.0, 0), "Y: " + str(offset[1]), (255, 255, 255))

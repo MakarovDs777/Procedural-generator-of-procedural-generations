@@ -144,18 +144,21 @@ z_input = ""
 chunk_size_input = ""
 seed_input = str(seed)
 lang_input = ""
-octaves_input = str(octaves)
-persistence_input = str(persistence)
-lacunarity_input = str(lacunarity)
-scale_input = str(scale)
+octaves_input = ""
+persistence_input = ""
+lacunarity_input = ""
+scale_input = ""
 smear_input = ""
 single_base_input = "no"
 active_field = "x"
 current_mode = "main"
-move_mode = "chunk"  # "chunk" для по чанкового перемещения, "free" для свободного режима перемещения
+move_mode = "chunk"  # "chunk" для перемещения по чанкам, "free" для свободного режима перемещения
 move_speed = 0.5
 move_speed_input = ""
+auto_chunk_random_input = ""
+auto_chunk_random = ""
 
+draw_text_position = []
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -190,7 +193,9 @@ while True:
                     offset[1] += move_speed
             if event.key == pygame.K_RETURN:
                 if x_input!= "" and y_input!= "" and z_input!= "":
-                    offset = [int(x_input), int(y_input), int(z_input)]
+                    offset[0] = int(x_input)
+                    offset[1] = int(y_input)
+                    offset[2] = int(z_input)
                     x_input = ""
                     y_input = ""
                     z_input = ""
@@ -228,6 +233,12 @@ while True:
                     except ValueError:
                         # Ignore invalid input (e.g., empty string or invalid format)
                         pass
+                elif active_field == "auto_chunk_random":
+                    if auto_chunk_random_input.lower() == "on":
+                        auto_chunk_random = True
+                    elif auto_chunk_random_input.lower() == "off":
+                        auto_chunk_random = False
+                    auto_chunk_random_input = ""
             if event.key == pygame.K_BACKSPACE:
                 if active_field == "x" and x_input!= "":
                     x_input = x_input[:-1]
@@ -255,6 +266,8 @@ while True:
                     single_base_input = single_base_input[:-1]
                 elif active_field == "move_speed" and move_speed_input!= "":
                     move_speed_input = move_speed_input[:-1]
+                elif active_field == "auto_chunk_random" and auto_chunk_random_input!= "":
+                    auto_chunk_random_input = auto_chunk_random_input[:-1]
             if event.key == pygame.K_TAB:
                 if active_field == "x":
                     active_field = "y"
@@ -268,7 +281,9 @@ while True:
                     active_field = "single_base"
                 elif active_field == "single_base":
                     active_field = "move_speed"
-                elif active_field == "move_speed":              
+                elif active_field == "move_speed":
+                    active_field = "auto_chunk_random"
+                elif active_field == "auto_chunk_random":
                     active_field = "x"
                 elif active_field == "lang":
                     active_field = "octaves"
@@ -283,8 +298,9 @@ while True:
                 elif active_field == "smear":
                     active_field = "optional"
                 elif active_field == "optional":
-                    active_field = "lang"        
-            if event.unicode.isdigit() or event.unicode == "-":
+                    active_field = "x"
+                    current_mode = "main"
+            if event.unicode.isalpha() or event.unicode == "/":
                 if active_field == "x":
                     x_input += event.unicode
                 elif active_field == "y":
@@ -295,10 +311,9 @@ while True:
                     chunk_size_input += event.unicode
                 elif active_field == "seed":
                     seed_input += event.unicode
-                elif active_field == "move_speed":
-                    move_speed_input += event.unicode                    
-            if event.unicode.isdigit() or event.unicode == ".":
-                if active_field == "octaves":
+                elif active_field == "lang":
+                    lang_input += event.unicode
+                elif active_field == "octaves":
                     octaves_input += event.unicode
                 elif active_field == "persistence":
                     persistence_input += event.unicode
@@ -308,22 +323,28 @@ while True:
                     scale_input += event.unicode
                 elif active_field == "smear":
                     smear_input += event.unicode
+                elif active_field == "single_base":
+                    single_base_input += event.unicode
+                elif active_field == "move_speed":
+                    move_speed_input += event.unicode
+                elif active_field == "auto_chunk_random":
+                    auto_chunk_random_input += event.unicode
             if event.unicode.isalpha():
                 if active_field == "lang":
                     lang_input += event.unicode
                 elif active_field == "optional":
                     single_base_input += event.unicode
                 elif active_field == "single_base":
-                    single_base_input += event.unicode                    
+                    single_base_input += event.unicode
             if event.key == pygame.K_r:
                 verts, faces = update(offset)
                 save_chunk(verts, faces, 'chunk.obj')
             if event.key == pygame.K_ESCAPE: 
                 pygame.quit()
                 quit()
-            if event.key == pygame.K_F1:
-                seed = random.randint(0, 1000)
-                chunks = {}  # Очистка словаря чанков
+            if event.key == pygame.K_F2:
+                chunk_size = int(chunk_size_input)
+                shape = (chunk_size, chunk_size, chunk_size)
             if event.key == pygame.K_F2:
                 chunk_size = int(chunk_size_input)
                 chunk_size_input = ""
@@ -331,10 +352,6 @@ while True:
             if event.key == pygame.K_RETURN:
                 seed = int(seed_input)
                 chunks = {}  # Очистка словаря чанков
-                if active_field == "chunk_size":
-                    chunk_size = int(chunk_size_input)
-                    shape = (chunk_size, chunk_size, chunk_size)
-                    chunk_size_input = ""
             if event.key == pygame.K_F3:
                 if current_mode == "main":
                     current_mode = "lang"
@@ -353,9 +370,11 @@ while True:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     update(offset)
 
-    # Отрисовка полей ввода в зависимости от текущего режима отображения
+    if auto_chunk_random:
+        if pygame.time.get_ticks() % 1000 < 50:
+            offset = [random.randint(-100, 100), random.randint(-100, 100), random.randint(-100, 100)]
+
     if current_mode == "main":
-        # Отрисовка полей ввода для основного режима
         if active_field == "x":
             draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255))
         else:
@@ -365,17 +384,17 @@ while True:
         else:
             draw_text((-24.5, 17, 0), "Координата Y: " + y_input, (255, 255, 255))
         if active_field == "z":
-            draw_text((-25, 14.0, 0), "Координата Z: " + z_input + "_", (255, 255, 255))
+            draw_text((-25, 14, 0), "Координата Z: " + z_input + "_", (255, 255, 255))
         else:
-            draw_text((-25, 14.0, 0), "Координата Z: " + z_input, (255, 255, 255))
+            draw_text((-25, 14, 0), "Координата Z: " + z_input, (255, 255, 255))
         if active_field == "chunk_size":
             draw_text((-25.5, 11.0, 0), "LOD: " + chunk_size_input + "_", (255, 255, 255))
         else:
             draw_text((-25.5, 11.0, 0), "LOD: " + str(chunk_size), (255, 255, 255))
         if active_field == "seed":
-            draw_text((-26, 8.0, 0), "Поменять сид мира: " + seed_input + "_", (255, 255, 255))
+            draw_text((-26, 8.0, 0), "Поменять сид: " + seed_input + "_", (255, 255, 255))
         else:
-            draw_text((-26, 8.0, 0), "Поменять сид мира: " + seed_input, (255, 255, 255))
+            draw_text((-26, 8.0, 0), "Поменять сид: " + str(seed), (255, 255, 255))
         if active_field == "single_base":
             draw_text((-26.5, 5.0, 0), "Единый base мира (yes/no): " + single_base_input + "_", (255, 255, 255))
         else:
@@ -384,7 +403,10 @@ while True:
             draw_text((-27, 2.0, 0), "Скорость перемещения: " + move_speed_input + "_", (255, 255, 255))
         else:
             draw_text((-27, 2.0, 0), "Скорость перемещения: " + str(move_speed), (255, 255, 255))
-
+        if active_field == "auto_chunk_random":
+            draw_text((-27.5, -1.0, 0), "Auto chunk random: " + auto_chunk_random_input + "_", (255, 255, 255))
+        else:
+            draw_text((-27.5, -1.0, 0), "Auto chunk random: " + str(auto_chunk_random), (255, 255, 255))
     
         # Отрисовка координат
         draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))

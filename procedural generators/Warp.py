@@ -67,7 +67,17 @@ y_input = ""
 z_input = ""
 chunk_size_input = str(chunk_size)
 seed_input = str(seed)
+speed_input = "1.0"
 active_field = "x"
+
+# Скорость случайного перемещения
+speed = 1.0
+
+# Переменная для хранения состояния автоматического перемещения
+auto_move = False
+
+# Переменная для хранения времени последнего перемещения
+last_move_time = 0
 
 # Функция для рисования текста
 def draw_text(position, text_string, color):
@@ -81,7 +91,7 @@ def update_chunk():
     global vertices, faces
     generate_chunk_at_coords((offset[0], offset[1], offset[2]))
 
-# Функция для сохранения чанка в формате .obj
+# Функция для сохранения чанка в формате.obj
 def save_chunk(vertices, faces, filename):
     with open(filename, 'w') as f:
         for v in vertices:
@@ -140,6 +150,13 @@ while True:
                     except ValueError:
                         pass
                     seed_input = ""
+                    active_field = "speed"
+                elif active_field == "speed":
+                    try:
+                        speed = float(speed_input)
+                    except ValueError:
+                        pass
+                    speed_input = ""
                     active_field = "x"
 
                 update_chunk()
@@ -155,8 +172,10 @@ while True:
                     chunk_size_input = chunk_size_input[:-1]
                 elif active_field == "seed" and seed_input:
                     seed_input = seed_input[:-1]
+                elif active_field == "speed" and speed_input:
+                    speed_input = speed_input[:-1]
 
-            if event.unicode.isdigit():
+            if event.unicode.isdigit() or event.unicode == '.':
                 if active_field == "x":
                     x_input += event.unicode
                 elif active_field == "y":
@@ -167,6 +186,8 @@ while True:
                     chunk_size_input += event.unicode
                 elif active_field == "seed":
                     seed_input += event.unicode
+                elif active_field == "speed":
+                    speed_input += event.unicode
 
             if event.key == pygame.K_TAB:  # Переключение между полями ввода
                 if active_field == "x":
@@ -178,6 +199,8 @@ while True:
                 elif active_field == "chunk_size":
                     active_field = "seed"
                 elif active_field == "seed":
+                    active_field = "speed"
+                elif active_field == "speed":
                     active_field = "x"
 
             # Добавление удобства случайного перемещения
@@ -186,6 +209,17 @@ while True:
                 offset[1] = random.randint(-10, 10) * chunk_size
                 offset[2] = random.randint(-10, 10) * chunk_size
 
+            if event.key == pygame.K_y:  # Нажатие клавиши "Y" для включения/выключения автоматического перемещения
+                auto_move = not auto_move
+                last_move_time = pygame.time.get_ticks()
+
+            if event.key == pygame.K_PLUS:  # Увеличение скорости случайного перемещения
+                speed += 0.1
+            if event.key == pygame.K_MINUS:  # Уменьшение скорости случайного перемещения
+                speed -= 0.1
+                if speed < 0.1:
+                    speed = 0.1
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Отрисовка чанка по текущим координатам
@@ -193,19 +227,29 @@ while True:
     draw_model(*chunks[(offset[0], offset[1], offset[2])])
 
     # Отрисовка интерфейса
-    draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255) if active_field != "x" else (255, 0, 0))
-    draw_text((-24.5, 17, 0), "Координата Y: " + y_input + "_", (255, 255, 255) if active_field != "y" else (255, 0, 0))
-    draw_text((-25, 14, 0), "Координата Z: " + z_input + "_", (255, 255, 255) if active_field != "z" else (255, 0, 0))
-    draw_text((-25.5, 11.0, 0), "LOD: " + chunk_size_input + "_", (255, 255, 255) if active_field != "chunk_size" else (255, 0, 0))
-    draw_text((-26, 8.0, 0), "Поменять сид: " + seed_input + "_", (255, 255, 255) if active_field != "seed" else (255, 0, 0))
+    draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255) if active_field!= "x" else (255, 0, 0))
+    draw_text((-24.5, 17, 0), "Координата Y: " + y_input + "_", (255, 255, 255) if active_field!= "y" else (255, 0, 0))
+    draw_text((-25, 14, 0), "Координата Z: " + z_input + "_", (255, 255, 255) if active_field!= "z" else (255, 0, 0))
+    draw_text((-25.5, 11.0, 0), "LOD: " + chunk_size_input + "_", (255, 255, 255) if active_field!= "chunk_size" else (255, 0, 0))
+    draw_text((-26, 8.0, 0), "Поменять сид: " + seed_input + "_", (255, 255, 255) if active_field!= "seed" else (255, 0, 0))
     draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
+    draw_text((-26.5, 5.0, 0), "Скорость случайного перемещения: " + speed_input + "_", (255, 255, 255) if active_field!= "speed" else (255, 0, 0))
+    draw_text((-35, -54.0, 0), "Скорость случайного перемещения: " + str(speed), (255, 255, 255))
 
     # Отрисовка текущих координат
     draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))
     draw_text((-22.6, 29.0, 0), "Y: " + str(offset[1]), (255, 255, 255))
     draw_text((-23, 26.0, 0), "Z: " + str(offset[2]), (255, 255, 255))
 
-    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R/Случайный чанк Space", (255, 255, 255))
+    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R/Случайный чанк Space/Автоматическое перемещение Y (вкл/выкл)", (255, 255, 255))
+
+    # Автоматическое перемещение
+    current_time = pygame.time.get_ticks()
+    if auto_move and current_time - last_move_time >= 100 / speed:
+        offset[0] = random.randint(-10, 10) * chunk_size
+        offset[1] = random.randint(-10, 10) * chunk_size
+        offset[2] = random.randint(-10, 10) * chunk_size
+        last_move_time = current_time
 
     pygame.display.flip()
     clock.tick(60)

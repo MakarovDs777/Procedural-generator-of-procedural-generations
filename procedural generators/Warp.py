@@ -245,7 +245,7 @@ while True:
 
     # Автоматическое перемещение
     current_time = pygame.time.get_ticks()
-    if auto_move and current_time - last_move_time >= 100 / speed:
+    if auto_move and current_time - last_move_time >= speed * 1000:
         offset[0] = random.randint(-10, 10) * chunk_size
         offset[1] = random.randint(-10, 10) * chunk_size
         offset[2] = random.randint(-10, 10) * chunk_size

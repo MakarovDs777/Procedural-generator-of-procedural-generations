@@ -142,7 +142,6 @@ while True:
                     seed_input = ""
                     active_field = "x"
 
-                # Обновление чанка при изменении `offset`
                 update_chunk()
 
             if event.key == pygame.K_BACKSPACE:
@@ -181,6 +180,12 @@ while True:
                 elif active_field == "seed":
                     active_field = "x"
 
+            # Добавление удобства случайного перемещения
+            if event.key == pygame.K_SPACE:  # Нажатие пробела для перемещения на случайный чанк
+                offset[0] = random.randint(-10, 10) * chunk_size
+                offset[1] = random.randint(-10, 10) * chunk_size
+                offset[2] = random.randint(-10, 10) * chunk_size
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Отрисовка чанка по текущим координатам
@@ -196,12 +201,11 @@ while True:
     draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
 
     # Отрисовка текущих координат
-    
     draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))
     draw_text((-22.6, 29.0, 0), "Y: " + str(offset[1]), (255, 255, 255))
     draw_text((-23, 26.0, 0), "Z: " + str(offset[2]), (255, 255, 255))
-    
-    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R", (255, 255, 255))
+
+    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R/Случайный чанк Space", (255, 255, 255))
 
     pygame.display.flip()
     clock.tick(60)

@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 import numpy as np
 import random
+import os
 
 # Инициализация Pygame
 pygame.init()
@@ -80,12 +81,28 @@ def update_chunk():
     global vertices, faces
     generate_chunk_at_coords((offset[0], offset[1], offset[2]))
 
+# Функция для сохранения чанка в формате .obj
+def save_chunk(vertices, faces, filename):
+    with open(filename, 'w') as f:
+        for v in vertices:
+            f.write('v {:.6f} {:.6f} {:.6f}\n'.format(v[0], v[1], v[2]))
+        for face in faces:
+            f.write('f {} {} {}\n'.format(face[0] + 1, face[1] + 1, face[2] + 1))
+
+# Генерация случайной структуры для первого кадра
+vertices, faces = create_random_chunk()
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
             pygame.quit()
             quit()
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:  # Сохранить сегмент
+                desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+                file_name = os.path.join(desktop, f'chunk_{offset[0]}_{offset[1]}_{offset[2]}.obj')
+                save_chunk(vertices, faces, file_name)  # Сохранить файл на рабочий стол
+                print(f'Сохранено: {file_name}')
             if event.key == pygame.K_RETURN:
                 # Обработка ввода в полях
                 if active_field == "x":
@@ -184,5 +201,7 @@ while True:
     draw_text((-22.6, 29.0, 0), "Y: " + str(offset[1]), (255, 255, 255))
     draw_text((-23, 26.0, 0), "Z: " + str(offset[2]), (255, 255, 255))
     
+    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R", (255, 255, 255))
+
     pygame.display.flip()
     clock.tick(60)

@@ -102,8 +102,26 @@ def save_chunk(vertices, faces, filename):
 # Генерация случайной структуры для первого кадра
 vertices, faces = create_random_chunk()
 
+# Основной цикл
+offset = [0, 0, 0]
+clock = pygame.time.Clock()
+
 while True:
     for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_w:  # Вперед по оси Z
+                offset[2] += chunk_size
+            if event.key == pygame.K_s:  # Назад по оси Z
+                offset[2] -= chunk_size
+            if event.key == pygame.K_a:  # Влево по оси X
+                offset[0] -= chunk_size
+            if event.key == pygame.K_d:  # Вправо по оси X
+                offset[0] += chunk_size
+            if event.key == pygame.K_q:  # Вверх по оси Y
+                offset[1] += chunk_size
+            if event.key == pygame.K_e:  # Вниз по оси Y
+                offset[1] -= chunk_size
+
         if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
             pygame.quit()
             quit()
@@ -219,7 +237,7 @@ while True:
                 speed -= 0.1
                 if speed < 0.1:
                     speed = 0.1
-
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Отрисовка чанка по текущим координатам

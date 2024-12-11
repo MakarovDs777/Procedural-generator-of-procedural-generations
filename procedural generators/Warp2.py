@@ -254,16 +254,16 @@ while True:
     draw_model(*chunks[(offset[0], offset[1], offset[2])])
 
     # Отрисовка интерфейса
+    draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
     draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255) if active_field!= "x" else (255, 0, 0))
     draw_text((-24.5, 17, 0), "Координата Y: " + y_input + "_", (255, 255, 255) if active_field!= "y" else (255, 0, 0))
     draw_text((-25, 14, 0), "Координата Z: " + z_input + "_", (255, 255, 255) if active_field!= "z" else (255, 0, 0))
     draw_text((-25.5, 11.0, 0), "LOD: " + chunk_size_input + "_", (255, 255, 255) if active_field!= "chunk_size" else (255, 0, 0))
     draw_text((-26, 8.0, 0), "Поменять сид: " + seed_input + "_", (255, 255, 255) if active_field!= "seed" else (255, 0, 0))
-    draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
     draw_text((-26.5, 5.0, 0), "Уровень: " + level_input + "_", (255, 255, 255) if active_field!= "level" else (255, 0, 0))
-    draw_text((-26.5, 2.0, 0), "Уровень: " + str(level), (255, 255, 255))
-    draw_text((-26.5, -1.0, 0), "Скорость случайного перемещения: " + speed_input + "_", (255, 255, 255) if active_field!= "speed" else (255, 0, 0))
-    draw_text((-35, -54.0, 0), "Скорость случайного перемещения: " + str(speed), (255, 255, 255))
+    draw_text((-27, 2.0, 0), "Уровень: " + str(level), (255, 255, 255))
+    draw_text((-27.5, -1.0, 0), "Скорость случайного перемещения: " + speed_input + "_", (255, 255, 255) if active_field!= "speed" else (255, 0, 0))
+    draw_text((-28, -4.0, 0), "Скорость случайного перемещения: " + str(speed), (255, 255, 255))
 
     # Отрисовка текущих координат
     draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))

@@ -5,6 +5,8 @@ from OpenGL.GLU import *
 import numpy as np
 import random
 import os
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 # Инициализация Pygame
 pygame.init()
@@ -22,6 +24,7 @@ min_val, max_val = -10, 10
 chunk_size = 32
 seed = random.randint(0, 1000)  # Генерация сид мира
 chunks = {}  # Словарь для хранения чанков
+level = 1  # Уровень чанка
 
 # Генерация случайных вершин
 def generate_random_vertices(num_vertices):
@@ -36,9 +39,9 @@ def generate_random_faces(num_vertices, num_faces):
     return faces
 
 # Создание чанка с случайной структурой
-def create_random_chunk():
-    num_vertices = random.randint(5, 20)  # Количество вершин
-    num_faces = random.randint(5, 20)      # Количество граней
+def create_random_chunk(level):
+    num_vertices = level * 5  # Количество вершин в зависимости от уровня
+    num_faces = level * 5      # Количество граней в зависимости от уровня
     vertices = generate_random_vertices(num_vertices)
     faces = generate_random_faces(num_vertices, num_faces)
     return vertices, faces
@@ -53,8 +56,9 @@ def draw_model(vertices, faces):
 
 # Функция для генерации чанка по координатам
 def generate_chunk_at_coords(coords):
+    global level
     if coords not in chunks:
-        vertices, faces = create_random_chunk()
+        vertices, faces = create_random_chunk(level)
         chunks[coords] = (vertices, faces)
 
 # Основной цикл
@@ -68,6 +72,7 @@ z_input = ""
 chunk_size_input = str(chunk_size)
 seed_input = str(seed)
 speed_input = "1.0"
+level_input = str(level)
 active_field = "x"
 
 # Скорость случайного перемещения
@@ -99,12 +104,16 @@ def save_chunk(vertices, faces, filename):
         for face in faces:
             f.write('f {} {} {}\n'.format(face[0] + 1, face[1] + 1, face[2] + 1))
 
-# Генерация случайной структуры для первого кадра
-vertices, faces = create_random_chunk()
-
-# Основной цикл
-offset = [0, 0, 0]
-clock = pygame.time.Clock()
+def load_obj_file(filename):
+    vertices = []
+    faces = []
+    with open(filename, 'r') as f:
+        for line in f:
+            if line.startswith('v '):
+                vertices.append([float(x) for x in line.split()[1:]])
+            elif line.startswith('f '):
+                faces.append([int(x) - 1 for x in line.split()[1:]])
+    return vertices, faces
 
 while True:
     for event in pygame.event.get():
@@ -129,7 +138,7 @@ while True:
             if event.key == pygame.K_r:  # Сохранить сегмент
                 desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
                 file_name = os.path.join(desktop, f'chunk_{offset[0]}_{offset[1]}_{offset[2]}.obj')
-                save_chunk(vertices, faces, file_name)  # Сохранить файл на рабочий стол
+                save_chunk(*chunks[(offset[0], offset[1], offset[2])], file_name)  # Сохранить файл на рабочий стол
                 print(f'Сохранено: {file_name}')
             if event.key == pygame.K_RETURN:
                 # Обработка ввода в полях
@@ -168,6 +177,13 @@ while True:
                     except ValueError:
                         pass
                     seed_input = ""
+                    active_field = "level"
+                elif active_field == "level":
+                    try:
+                        level = int(level_input) if level_input else 1
+                    except ValueError:
+                        pass
+                    level_input = ""
                     active_field = "speed"
                 elif active_field == "speed":
                     try:
@@ -190,6 +206,8 @@ while True:
                     chunk_size_input = chunk_size_input[:-1]
                 elif active_field == "seed" and seed_input:
                     seed_input = seed_input[:-1]
+                elif active_field == "level" and level_input:
+                    level_input = level_input[:-1]
                 elif active_field == "speed" and speed_input:
                     speed_input = speed_input[:-1]
 
@@ -204,6 +222,8 @@ while True:
                     chunk_size_input += event.unicode
                 elif active_field == "seed":
                     seed_input += event.unicode
+                elif active_field == "level":
+                    level_input += event.unicode
                 elif active_field == "speed":
                     speed_input += event.unicode
 
@@ -217,6 +237,8 @@ while True:
                 elif active_field == "chunk_size":
                     active_field = "seed"
                 elif active_field == "seed":
+                    active_field = "level"
+                elif active_field == "level":
                     active_field = "speed"
                 elif active_field == "speed":
                     active_field = "x"
@@ -237,7 +259,15 @@ while True:
                 speed -= 0.1
                 if speed < 0.1:
                     speed = 0.1
-    
+
+            if event.key == pygame.K_b:  # Нажатие клавиши "B" для выбора файла OBJ
+                Tk().withdraw()  # Hide the Tkinter window
+                filename = askopenfilename(filetypes=[("OBJ files", "*.obj")])
+                if filename:
+                    vertices, faces = load_obj_file(filename)
+                    chunks[(offset[0], offset[1], offset[2])] = (vertices, faces)
+                    update_chunk()
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     # Отрисовка чанка по текущим координатам
@@ -245,21 +275,23 @@ while True:
     draw_model(*chunks[(offset[0], offset[1], offset[2])])
 
     # Отрисовка интерфейса
+    draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
     draw_text((-24, 20.0, 0), "Координата X: " + x_input + "_", (255, 255, 255) if active_field!= "x" else (255, 0, 0))
     draw_text((-24.5, 17, 0), "Координата Y: " + y_input + "_", (255, 255, 255) if active_field!= "y" else (255, 0, 0))
     draw_text((-25, 14, 0), "Координата Z: " + z_input + "_", (255, 255, 255) if active_field!= "z" else (255, 0, 0))
     draw_text((-25.5, 11.0, 0), "LOD: " + chunk_size_input + "_", (255, 255, 255) if active_field!= "chunk_size" else (255, 0, 0))
     draw_text((-26, 8.0, 0), "Поменять сид: " + seed_input + "_", (255, 255, 255) if active_field!= "seed" else (255, 0, 0))
-    draw_text((-23.5, 23.0, 0), "Сид мира: " + str(seed), (255, 255, 255))
-    draw_text((-26.5, 5.0, 0), "Скорость случайного перемещения: " + speed_input + "_", (255, 255, 255) if active_field!= "speed" else (255, 0, 0))
-    draw_text((-35, -54.0, 0), "Скорость случайного перемещения: " + str(speed), (255, 255, 255))
+    draw_text((-26.5, 5.0, 0), "Уровень: " + level_input + "_", (255, 255, 255) if active_field!= "level" else (255, 0, 0))
+    draw_text((-27, 2.0, 0), "Уровень: " + str(level), (255, 255, 255))
+    draw_text((-27.5, -1.0, 0), "Скорость случайного перемещения: " + speed_input + "_", (255, 255, 255) if active_field!= "speed" else (255, 0, 0))
+    draw_text((-28, -4.0, 0), "Скорость случайного перемещения: " + str(speed), (255, 255, 255))
 
     # Отрисовка текущих координат
     draw_text((-22.1, 32.0, 0), "X: " + str(offset[0]), (255, 255, 255))
     draw_text((-22.6, 29.0, 0), "Y: " + str(offset[1]), (255, 255, 255))
     draw_text((-23, 26.0, 0), "Z: " + str(offset[2]), (255, 255, 255))
 
-    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R/Случайный чанк Space/Автоматическое перемещение Y (вкл/выкл)", (255, 255, 255))
+    draw_text((-35, -45.0, 0), "Переключиться Tab/Сохранить дамп чанка R/Случайный чанк Space/Автоматическое перемещение Y (вкл/выкл)/Нажатие клавиши B для поиска файла OBJ", (255, 255, 255))
 
     # Автоматическое перемещение
     current_time = pygame.time.get_ticks()

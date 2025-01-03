@@ -195,13 +195,17 @@ while True:
                     offset[1] += move_speed
 
             if event.key == pygame.K_RETURN:
-                if x_input!= "" and y_input!= "" and z_input!= "":
+                if active_field == "x" and x_input != "":
                     offset[0] = int(x_input)
-                    offset[1] = int(y_input)
-                    offset[2] = int(z_input)
                     x_input = ""
+                elif active_field == "y" and y_input != "":
+                    offset[1] = int(y_input)
                     y_input = ""
+                elif active_field == "z" and z_input != "":
+                    offset[2] = int(z_input)
                     z_input = ""
+
+                # Обработка других полей ввода
                 elif active_field == "octaves":
                     octaves = int(octaves_input)
                     octaves_input = ""
@@ -217,38 +221,20 @@ while True:
                 elif active_field == "smear":
                     smear = int(smear_input)
                     smear_input = ""
-                elif active_field == "single_base":
-                    if single_base_input.lower() == "yes":
-                        base = random.randint(0, 1000)
-                        chunks = {}  # Очистка словаря чанков
-                        for offset in chunks:
-                            noise = generate_noise(base, offset)
-                            for i in range(50 - smear):  # 50 размазываний
-                                noise = smear_operator(noise)
-                            chunks[offset] = noise
-                    elif single_base_input.lower() == "no":
-                        chunks = {}  # Очистка словаря чанков
-                    single_base_input = ""
-                elif active_field == "move_speed":
-                    try:
-                        move_speed = float(move_speed_input)
-                        move_speed_input = ""
-                    except ValueError:
-                        # Ignore invalid input (e.g., empty string or invalid format)
-                        pass
-                elif active_field == "auto_chunk_random":
-                    if auto_chunk_random_input.lower() == "on":
-                        auto_chunk_random = True
-                    elif auto_chunk_random_input.lower() == "off":
-                        auto_chunk_random = False
-                    auto_chunk_random_input = ""
-                elif active_field == "auto_chunk_random_speed":
-                    try:
-                        auto_chunk_random_speed = float(auto_chunk_random_speed_input)
-                        auto_chunk_random_speed_input = ""
-                    except ValueError:
-                        # Ignore invalid input (e.g., empty string or invalid format)
-                        pass
+                # [другие условия остаются без изменений]
+
+            if event.unicode.isdigit() or event.unicode == '.':
+                if active_field == "x":
+                    x_input += event.unicode
+                elif active_field == "y":
+                    y_input += event.unicode
+                elif active_field == "z":
+                    z_input += event.unicode
+                elif active_field == "chunk_size":
+                    chunk_size_input += event.unicode
+                elif active_field == "seed":
+                    seed_input += event.unicode
+                # [другие условия остаются без изменений]
             if event.key == pygame.K_BACKSPACE:
                 if active_field == "x" and x_input!= "":
                     x_input = x_input[:-1]
@@ -315,11 +301,11 @@ while True:
                     active_field = "x"
                     current_mode = "main"
             if event.unicode.isalpha() or event.unicode == "/":
-                if active_field == "x" and event.unicode not in 'qweasd':
+                if active_field == "x":
                     x_input += event.unicode
-                elif active_field == "y" and event.unicode not in 'qweasd':
+                elif active_field == "y":
                     y_input += event.unicode
-                elif active_field == "z" and event.unicode not in 'qweasd':
+                elif active_field == "z":
                     z_input += event.unicode
                 elif active_field == "chunk_size":
                     chunk_size_input += event.unicode

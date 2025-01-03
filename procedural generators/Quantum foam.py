@@ -315,11 +315,11 @@ while True:
                     active_field = "x"
                     current_mode = "main"
             if event.unicode.isalpha() or event.unicode == "/":
-                if active_field == "x":
+                if active_field == "x" and event.unicode not in 'qweasd':
                     x_input += event.unicode
-                elif active_field == "y":
+                elif active_field == "y" and event.unicode not in 'qweasd':
                     y_input += event.unicode
-                elif active_field == "z":
+                elif active_field == "z" and event.unicode not in 'qweasd':
                     z_input += event.unicode
                 elif active_field == "chunk_size":
                     chunk_size_input += event.unicode
